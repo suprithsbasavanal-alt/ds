@@ -1,3 +1,54 @@
+export interface StationModelEstimates {
+  pm2_5: number | null;
+  pm10: number | null;
+  no2: number | null;
+  so2: number | null;
+  co: number | null;
+  ozone: number | null;
+  model_aqi: number | null;
+  attribution: string;
+}
+
+export interface Station {
+  id: string;
+  waqi_uid?: number;
+  name: string;
+  short_name: string;
+  latitude: number;
+  longitude: number;
+  elevation_m: number;
+  zone: string;
+  station_type: string;
+  official_network: string;
+  aqi: number | null;
+  cpcb_ground_aqi: number | null;
+  cpcb_observation_time: string | null;
+  observation_age_hours?: number | null;
+  data_quality: 'verified' | 'delayed' | 'stale' | 'unavailable';
+  data_classification: string;
+  is_valid_for_ranking: boolean;
+  category: string;
+  color: string;
+  severity_level: number;
+  description: string;
+  model_estimates?: StationModelEstimates;
+  last_updated: string;
+  rank?: number;
+}
+
+export interface RankingsResponse {
+  ranking_basis: string;
+  order: string;
+  ranked_stations: Station[];
+  stale_stations: Station[];
+  offline_stations: Station[];
+  offline_or_stale_stations: Station[];
+  total_ranked: number;
+  total_monitored: number;
+  ranking_criteria: string;
+  timestamp: string;
+}
+
 export interface DashboardData {
   city: string;
   state: string;
@@ -6,19 +57,69 @@ export interface DashboardData {
   timezone: string;
   last_updated: string;
   last_updated_human: string;
-  overall_aqi: number;
+  ground_station_telemetry?: {
+    mean_station_aqi: number | null;
+    label: string;
+    category: string;
+    color: string;
+    severity_level: number;
+    description: string;
+    active_stations_counted: number;
+    total_stations_monitored: number;
+    status: string;
+    data_source: string;
+    measurement_type: string;
+    applicable_scale: string;
+  };
+  cpcb_model_grid_naqi?: {
+    calculated_naqi: number | null;
+    prominent_pollutant: string | null;
+    category: string;
+    color: string;
+    sub_indices: Record<string, number>;
+    criteria_met: boolean;
+    methodology: string;
+    official_reference_url: string;
+  };
+  atmospheric_model_telemetry: {
+    us_aqi: number | null;
+    european_aqi: number | null;
+    pm2_5: { value: number | null; unit: string };
+    pm10: { value: number | null; unit: string };
+    no2: { value: number | null; unit: string };
+    so2: { value: number | null; unit: string };
+    co: { value: number | null; unit: string };
+    ozone: { value: number | null; unit: string };
+    data_source: string;
+    measurement_type: string;
+  };
+  weather_telemetry: {
+    temperature: { value: number | null; unit: string };
+    apparent_temperature: { value: number | null; unit: string };
+    relative_humidity: { value: number | null; unit: string };
+    wind_speed: { value: number | null; unit: string };
+    wind_direction: { value: number | null; unit: string };
+    precipitation: { value: number | null; unit: string };
+    surface_pressure: { value: number | null; unit: string };
+    cloud_cover: { value: number | null; unit: string };
+    data_source: string;
+    measurement_type: string;
+    observation_time?: string;
+  };
+  overall_aqi: number | null;
+  overall_aqi_label?: string;
   cpcb_category: string;
   cpcb_color: string;
   cpcb_severity_level: number;
   health_summary: string;
   dominant_pollutant: string;
   pollutants: {
-    pm2_5: { value: number | null; unit: string; label: string };
-    pm10: { value: number | null; unit: string; label: string };
-    no2: { value: number | null; unit: string; label: string };
-    so2: { value: number | null; unit: string; label: string };
-    co: { value: number | null; unit: string; label: string };
-    ozone: { value: number | null; unit: string; label: string };
+    pm2_5: { value: number | null; unit: string; label: string; source: string };
+    pm10: { value: number | null; unit: string; label: string; source: string };
+    no2: { value: number | null; unit: string; label: string; source: string };
+    so2: { value: number | null; unit: string; label: string; source: string };
+    co: { value: number | null; unit: string; label: string; source: string };
+    ozone: { value: number | null; unit: string; label: string; source: string };
   };
   weather: {
     temperature: { value: number | null; unit: string };
@@ -34,51 +135,17 @@ export interface DashboardData {
   cleanest_station?: Station | null;
   total_stations_monitored: number;
   active_ground_stations: number;
-  sources: {
-    ground_monitoring: string;
+  stale_stations_count: number;
+  offline_stations_count: number;
+  data_provenance: {
+    ground_monitoring_feed?: string;
+    ground_monitoring?: string;
     atmospheric_model: string;
-    weather_model: string;
+    meteorological_model: string;
+    audit_timestamp: string;
+    integrity_policy: string;
   };
   is_stale?: boolean;
-}
-
-export interface Station {
-  id: string;
-  name: string;
-  short_name: string;
-  latitude: number;
-  longitude: number;
-  elevation_m: number;
-  zone: string;
-  station_type: string;
-  aqi: number | null;
-  cpcb_ground_aqi: number | null;
-  cpcb_observation_time: string | null;
-  category: string;
-  color: string;
-  severity_level: number;
-  description: string;
-  pm2_5?: number | null;
-  pm10?: number | null;
-  no2?: number | null;
-  so2?: number | null;
-  co?: number | null;
-  ozone?: number | null;
-  effective_source: string;
-  data_type: 'Ground Observation' | 'Atmospheric Model';
-  is_ground_monitoring_active: boolean;
-  last_updated: string;
-  rank?: number;
-}
-
-export interface RankingsResponse {
-  ranking_basis: string;
-  order: string;
-  ranked_stations: Station[];
-  offline_or_stale_stations: Station[];
-  total_ranked: number;
-  total_monitored: number;
-  timestamp: string;
 }
 
 export interface TimeseriesRecord {
@@ -136,12 +203,36 @@ export interface PredictionStep {
   predicted_aqi: number;
   lower_bound: number;
   upper_bound: number;
+  uncertainty_spread?: number;
+  uncertainty_label?: string;
   category: string;
   color: string;
   expected_temp: number;
   expected_humidity: number;
   expected_wind_speed: number;
+  model_used?: string;
   is_model_prediction: boolean;
+  classification: string;
+}
+
+export interface HorizonComparison {
+  horizon_hours: number;
+  naive_persistence: {
+    mae: number;
+    rmse: number;
+    r2_score: number;
+  };
+  machine_learning: {
+    mae: number;
+    rmse: number;
+    r2_score: number;
+  };
+  superior_model: string;
+  hybrid_ensemble?: {
+    mae: number;
+    rmse: number;
+    r2_score: number;
+  };
 }
 
 export interface ModelMetadata {
@@ -154,17 +245,37 @@ export interface ModelMetadata {
   total_samples: number;
   train_samples: number;
   test_samples: number;
+  target_variable?: {
+    name: string;
+    grid_coordinates: number[];
+    resolution: string;
+    disclosure: string;
+  };
   metrics: {
-    mae: number;
-    rmse: number;
-    r2_score: number;
-    baseline_persistence_mae: number;
-    baseline_persistence_rmse: number;
-    mae_improvement_pct: number;
-    rmse_improvement_pct: number;
+    mae?: number;
+    rmse?: number;
+    r2_score?: number;
+    mae_1h?: number;
+    rmse_1h?: number;
+    r2_score_1h?: number;
+    baseline_persistence_mae_1h?: number;
+    baseline_persistence_rmse_1h?: number;
+    baseline_persistence_mae_3h?: number;
+    baseline_persistence_rmse_3h?: number;
+    baseline_persistence_mae_6h?: number;
+    baseline_persistence_rmse_6h?: number;
+    active_1h_predictor?: string;
+    evaluation_notes?: string;
+  };
+  multi_horizon_comparison?: Record<string, HorizonComparison>;
+  uncertainty_calibration?: {
+    method: string;
+    label: string;
+    coverage_disclaimer: string;
   };
   feature_importance: Array<{ feature: string; importance: number }>;
   data_source: string;
+  epistemological_classification: string;
 }
 
 export interface DriverAnalysis {
@@ -215,4 +326,21 @@ export interface SolutionsData {
     description: string;
   }>;
   measured_trigger_context: string;
+}
+
+export interface ProvenanceItem {
+  data_category: string;
+  source_provider: string;
+  measurement_type: string;
+  status: string;
+  data_freshness: string;
+  official_url: string;
+  secondary_url?: string;
+  disclosure: string;
+}
+
+export interface ProvenanceResponse {
+  timestamp: string;
+  city: string;
+  data_provenance_catalog: ProvenanceItem[];
 }

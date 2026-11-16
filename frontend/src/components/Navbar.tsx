@@ -10,7 +10,11 @@ import {
   Sparkles,
   RefreshCw,
   Clock,
-  Radio
+  Radio,
+  CheckCircle2,
+  AlertTriangle,
+  Database,
+  ShieldCheck
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -20,6 +24,8 @@ interface NavbarProps {
   onRefresh: () => void;
   isRefreshing: boolean;
   activeGroundStations: number;
+  staleStationsCount: number;
+  offlineStationsCount: number;
   totalStations: number;
 }
 
@@ -30,10 +36,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   onRefresh,
   isRefreshing,
   activeGroundStations,
+  staleStationsCount,
+  offlineStationsCount,
   totalStations
 }) => {
   const [timeStr, setTimeStr] = useState<string>('');
-  const [countdown, setCountdown] = useState<number>(300); // 5 minutes refresh cycle
+  const [countdown, setCountdown] = useState<number>(180); // 3 minutes refresh cycle
 
   useEffect(() => {
     const updateTime = () => {
@@ -58,7 +66,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       setCountdown((prev) => {
         if (prev <= 1) {
           onRefresh();
-          return 300;
+          return 180;
         }
         return prev - 1;
       });
@@ -75,6 +83,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'ai', label: 'AI Driver Intelligence', icon: Brain },
     { id: 'health', label: 'Health Advisory', icon: ShieldAlert },
     { id: 'solutions', label: 'Solutions Center', icon: Sparkles },
+    { id: 'provenance', label: 'Data Provenance', icon: ShieldCheck },
   ];
 
   const formatCountdown = (secs: number) => {
@@ -97,25 +106,35 @@ export const Navbar: React.FC<NavbarProps> = ({
                 AERIS 3D
               </span>
               <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-cyan-950/60 text-cyan-400 border border-cyan-800/60">
-                Bangalore CAAQMS
+                Bangalore Verified CAAQMS
               </span>
             </div>
             <p className="text-[11px] text-slate-400 hidden sm:block">
-              Continuous Real-Time Air Quality & Weather Telemetry
+              Empirical Ground Observations & Meteorological Telemetry
             </p>
           </div>
         </div>
 
-        {/* Center telemetry metadata badges */}
-        <div className="hidden lg:flex items-center gap-4 text-xs font-mono">
+        {/* Center telemetry metadata badges with audited data quality */}
+        <div className="hidden lg:flex items-center gap-3 text-xs font-mono">
+          {/* CPCB Ground Telemetry Status */}
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900/80 border border-slate-800 text-slate-300">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <span>Ground Sensors:</span>
-            <span className="text-emerald-400 font-semibold">{activeGroundStations}/{totalStations} Active</span>
+            <span>CPCB Ground:</span>
+            <span className="text-emerald-400 font-semibold">{activeGroundStations} Live</span>
+            {staleStationsCount > 0 && (
+              <span className="text-amber-400">({staleStationsCount} Stale)</span>
+            )}
+            {offlineStationsCount > 0 && (
+              <span className="text-rose-400">({offlineStationsCount} Offline)</span>
+            )}
           </div>
+
+          {/* Model Status */}
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900/80 border border-slate-800 text-slate-300">
-            <span className="text-cyan-400 font-medium">ECMWF / CAMS:</span>
-            <span className="text-slate-400">Atmospheric Grid OK</span>
+            <Database className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="text-cyan-400">CAMS Grid:</span>
+            <span className="text-slate-400">Model OK</span>
           </div>
         </div>
 
@@ -129,7 +148,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => {
-                setCountdown(300);
+                setCountdown(180);
                 onRefresh();
               }}
               disabled={isRefreshing}

@@ -9,7 +9,8 @@ import {
   ModelMetadata,
   DriverAnalysis,
   HealthAdvisory,
-  SolutionsData
+  SolutionsData,
+  ProvenanceResponse
 } from '../types';
 
 const BASE_URL = '/api';
@@ -74,5 +75,7 @@ export const api = {
 
   getHealthAdvisory: () => fetchJson<HealthAdvisory>('/health-advisory'),
 
-  getSolutions: () => fetchJson<SolutionsData>('/solutions')
+  getSolutions: () => fetchJson<SolutionsData>('/solutions'),
+
+  getProvenance: () => fetchJson<ProvenanceResponse>('/provenance')
 };
